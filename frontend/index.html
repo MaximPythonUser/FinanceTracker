@@ -33,7 +33,10 @@
           <input id="email" name="email" type="email" placeholder="you@example.com" maxlength="127" required />
           <div id="passwordField">
             <label for="password">Пароль</label>
-            <input id="password" name="password" type="password" minlength="8" maxlength="128" placeholder="Минимум 8 символов" required />
+            <div class="password-control">
+              <input id="password" name="password" type="password" minlength="8" maxlength="128" placeholder="Минимум 8 символов" required />
+              <button id="togglePassword" class="password-toggle" type="button" aria-label="Показать пароль" title="Показать пароль">&#128065;</button>
+            </div>
           </div>
         </div>
         <div id="codeField" class="hidden">

@@ -32,6 +32,10 @@ input:focus,select:focus { border-color:#78a88b; box-shadow:0 0 0 3px rgba(120,1
 .auth-switch { display:grid; grid-template-columns:1fr 1fr; gap:4px; margin-bottom:18px; padding:4px; border:1px solid var(--line); border-radius:8px; background:#f2f6f1; }
 .auth-switch button { border:0; border-radius:6px; padding:9px 10px; color:var(--muted); background:transparent; font-weight:700; cursor:pointer; }
 .auth-switch button.active { background:var(--white); color:var(--ink); box-shadow:0 2px 7px rgba(34,58,43,.08); }
+.password-control { position:relative; }
+.password-control input { padding-right:48px; }
+.password-toggle { position:absolute; top:50%; right:8px; width:34px; height:34px; transform:translateY(-50%); border:0; border-radius:6px; background:transparent; color:var(--muted); font-size:18px; line-height:1; }
+.password-toggle:hover,.password-toggle:focus-visible { background:#edf4ed; color:var(--ink); outline:none; }
 .error { min-height:18px; color:var(--red); font-size:13px; }
 .topbar { display:flex; justify-content:space-between; align-items:center; padding:28px 0 50px; border-bottom:1px solid var(--line); }
 .topbar-meta { display:flex; align-items:center; gap:10px; color:var(--muted); font-size:13px; }

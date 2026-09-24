@@ -63,6 +63,14 @@ function setAuthMode(mode) {
   $('authNote').textContent = mode === 'login' ? 'Используйте email и пароль, заданный при регистрации.' : 'Для регистрации потребуется одно подтверждение по email.';
 }
 
+function togglePassword() {
+  const passwordInput = $('password');
+  const isVisible = passwordInput.type === 'text';
+  passwordInput.type = isVisible ? 'password' : 'text';
+  $('togglePassword').setAttribute('aria-label', isVisible ? 'Показать пароль' : 'Скрыть пароль');
+  $('togglePassword').title = isVisible ? 'Показать пароль' : 'Скрыть пароль';
+}
+
 async function loadDashboard() {
   $('activityLoading').classList.remove('hidden'); $('activityList').classList.add('hidden');
   try { [state.wallets, state.operations] = await Promise.all([request('/wallets'), request('/operations')]); const balance = await request('/balance'); render(balance.total_balance); } catch (error) { showToast(error.message, true); } finally { $('activityLoading').classList.add('hidden'); $('activityList').classList.remove('hidden'); }
@@ -83,7 +91,7 @@ async function submitOperation(event) { event.preventDefault(); try { await requ
 async function submitTransfer(event) { event.preventDefault(); try { await request('/operations/transfer', { method:'POST', body:JSON.stringify({ from_wallet_id:Number($('fromWallet').value), to_wallet_id:Number($('toWallet').value), amount:Number($('transferAmount').value) }) }); event.target.reset(); showToast('Перевод выполнен'); loadDashboard(); } catch (error) { showToast(error.message, true); } }
 async function createWallet(event) { event.preventDefault(); try { await request('/wallets', { method:'POST', body:JSON.stringify({ name:$('walletName').value.trim(), initial_balance:Number($('walletBalance').value), currency:$('walletCurrency').value }) }); $('walletModal').close(); event.target.reset(); showToast('Кошелёк создан'); loadDashboard(); } catch (error) { showToast(error.message, true); } }
 
-$('authForm').addEventListener('submit', authenticate); $('loginMode').addEventListener('click', () => setAuthMode('login')); $('registerMode').addEventListener('click', () => setAuthMode('register')); $('operationForm').addEventListener('submit', submitOperation); $('transferForm').addEventListener('submit', submitTransfer); $('walletForm').addEventListener('submit', createWallet); $('refreshButton').addEventListener('click', loadDashboard); $('openWalletModal').addEventListener('click', () => $('walletModal').showModal()); $('closeWalletModal').addEventListener('click', () => $('walletModal').close()); $('logoutButton').addEventListener('click', () => { clearSession(); location.reload(); });
+ $('authForm').addEventListener('submit', authenticate); $('loginMode').addEventListener('click', () => setAuthMode('login')); $('registerMode').addEventListener('click', () => setAuthMode('register')); $('togglePassword').addEventListener('click', togglePassword); $('operationForm').addEventListener('submit', submitOperation); $('transferForm').addEventListener('submit', submitTransfer); $('walletForm').addEventListener('submit', createWallet); $('refreshButton').addEventListener('click', loadDashboard); $('openWalletModal').addEventListener('click', () => $('walletModal').showModal()); $('closeWalletModal').addEventListener('click', () => $('walletModal').close()); $('logoutButton').addEventListener('click', () => { clearSession(); location.reload(); });
  $('activityToggle').addEventListener('click', () => { state.showAllOperations = !state.showAllOperations; render(state.lastTotalBalance); }); $('activityFilter').addEventListener('change', event => { state.filter = event.target.value; state.showAllOperations = false; render(state.lastTotalBalance); }); $('activitySort').addEventListener('change', event => { state.sort = event.target.value; render(state.lastTotalBalance); }); $('mobileRefresh').addEventListener('click', loadDashboard);
 async function restoreSession() {
   if (!state.token) return showAuth();
