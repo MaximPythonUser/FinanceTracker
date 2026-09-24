@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Finance Tracker</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/styles.css?v=20260921-10" />
+</head>
+<body>
+  <main class="shell">
+    <section class="auth-view" id="authView">
+      <div class="auth-copy">
+        <span class="eyebrow">PERSONAL FINANCE</span>
+        <h1>Деньги под рукой,<br><em>картина целиком.</em></h1>
+        <p>Следите за кошельками, операциями и курсами валют в одном спокойном рабочем пространстве.</p>
+      </div>
+      <form class="auth-card" id="authForm">
+        <div class="brand-mark">FT<span>/</span>01</div>
+        <h2 id="authTitle">Вход по паролю</h2>
+        <div class="auth-switch" role="tablist" aria-label="Режим авторизации">
+          <button id="loginMode" class="active" type="button">Вход</button>
+          <button id="registerMode" type="button">Регистрация</button>
+        </div>
+        <div id="identityFields">
+          <div id="loginField" class="hidden">
+            <label for="login">Логин</label>
+            <input id="login" name="login" placeholder="например, alex" maxlength="127" />
+          </div>
+          <label for="email">Email</label>
+          <input id="email" name="email" type="email" placeholder="you@example.com" maxlength="127" required />
+          <div id="passwordField">
+            <label for="password">Пароль</label>
+            <input id="password" name="password" type="password" minlength="8" maxlength="128" placeholder="Минимум 8 символов" required />
+          </div>
+        </div>
+        <div id="codeField" class="hidden">
+          <label for="emailCode">Код из письма</label>
+          <input id="emailCode" name="code" inputmode="numeric" pattern="[0-9]{6}" minlength="6" maxlength="6" placeholder="123456" />
+        </div>
+        <button class="button button-primary" id="authSubmit" type="submit">Войти <span>→</span></button>
+        <p class="form-note" id="authNote">Для регистрации потребуется одно подтверждение по email.</p>
+        <p class="error" id="authError" role="alert"></p>
+      </form>
+    </section>
+
+    <section class="app-view hidden" id="appView">
+      <header class="topbar">
+        <div class="brand-mark">FT<span>/</span>01</div>
+        <div class="topbar-meta">
+          <span class="status-dot"></span>
+          <span id="userName"></span>
+          <button class="logout" id="logoutButton" type="button">Выйти</button>
+        </div>
+      </header>
+
+      <div class="dashboard-heading">
+        <div>
+          <span class="eyebrow">OVERVIEW / <span id="today"></span></span>
+          <h1>Финансовый обзор</h1>
+        </div>
+        <button class="button button-outline" id="refreshButton" type="button"><span>↻</span> Обновить</button>
+      </div>
+
+      <div class="summary-grid">
+        <article class="summary-card summary-main">
+          <span class="card-label">Общий баланс</span>
+          <strong id="totalBalance">—</strong>
+          <span class="summary-caption">В пересчёте на RUB</span>
+        </article>
+        <article class="summary-card">
+          <span class="card-label">Кошельки</span>
+          <strong id="walletCount">—</strong>
+          <span class="summary-caption">Активных счетов</span>
+        </article>
+        <article class="summary-card">
+          <span class="card-label">Операции</span>
+          <strong id="operationCount">—</strong>
+          <span class="summary-caption">За всё время</span>
+        </article>
+      </div>
+
+      <section class="insight-panel panel">
+        <div class="panel-heading">
+          <div><span class="eyebrow">MONEY FLOW</span><h2>Движение средств</h2></div>
+          <span class="period-label">Последние 7 дней</span>
+        </div>
+        <div class="flow-chart" id="flowChart"></div>
+        <div class="chart-legend"><span><i class="legend-income"></i>Доходы</span><span><i class="legend-expense"></i>Расходы</span><span class="chart-hint">Длина полосы показывает размер операции</span></div>
+      </section>
+
+      <div class="content-grid">
+        <section class="panel wallets-panel">
+          <div class="panel-heading">
+            <div><span class="eyebrow">ACCOUNTS</span><h2>Кошельки</h2></div>
+            <button class="icon-button" id="openWalletModal" type="button" aria-label="Добавить кошелёк">+</button>
+          </div>
+          <div class="wallet-list" id="walletList"></div>
+          <p class="empty-state hidden" id="walletEmpty">Добавьте первый кошелёк, чтобы начать.</p>
+        </section>
+
+        <section class="panel activity-panel">
+          <div class="panel-heading">
+            <div><span class="eyebrow">RECENT ACTIVITY</span><h2>Последние операции</h2></div>
+          </div>
+          <div class="activity-tools">
+            <select id="activityFilter" aria-label="Фильтр операций">
+              <option value="all">Все операции</option><option value="income">Доходы</option><option value="expense">Расходы</option><option value="transfer">Переводы</option>
+            </select>
+            <select id="activitySort" aria-label="Сортировка операций"><option value="newest">Сначала новые</option><option value="oldest">Сначала старые</option><option value="largest">Сначала крупные</option></select>
+          </div>
+          <div class="activity-list" id="activityList"></div>
+          <div class="loading-state hidden" id="activityLoading"><span></span><span></span><span></span></div>
+          <p class="empty-state hidden" id="activityEmpty">Операций пока нет.</p>
+          <p class="empty-state hidden" id="activityFilteredEmpty">По выбранному фильтру операций нет.</p>
+          <button class="activity-toggle hidden" id="activityToggle" type="button">Показать все операции</button>
+        </section>
+      </div>
+
+      <section class="action-strip">
+        <div class="action-intro"><span class="eyebrow">QUICK ACTIONS</span><h2>Добавить движение</h2></div>
+        <form id="operationForm" class="operation-form">
+          <select id="operationType" aria-label="Тип операции"><option value="income">Доход</option><option value="expense">Расход</option></select>
+          <select id="operationWallet" aria-label="Кошелёк" required></select>
+          <input id="operationAmount" type="number" min="0.01" step="0.01" placeholder="Сумма" required />
+          <input id="operationDescription" type="text" maxlength="255" placeholder="Описание" />
+          <button class="button button-dark" type="submit">Сохранить <span>→</span></button>
+        </form>
+      </section>
+
+      <section class="transfer-panel panel">
+        <div class="panel-heading"><div><span class="eyebrow">MOVE MONEY</span><h2>Перевод между кошельками</h2></div></div>
+        <form id="transferForm" class="transfer-form">
+          <select id="fromWallet" aria-label="Откуда" required></select>
+          <span class="transfer-arrow">→</span>
+          <select id="toWallet" aria-label="Куда" required></select>
+          <input id="transferAmount" type="number" min="0.01" step="0.01" placeholder="Сумма" required />
+          <button class="button button-outline" type="submit">Перевести</button>
+        </form>
+      </section>
+      <p class="toast" id="toast" role="status"></p>
+      <nav class="mobile-nav" aria-label="Навигация"><a href="#top">Обзор</a><a href="#walletList">Кошельки</a><a href="#activityList">Операции</a><button id="mobileRefresh" type="button">Обновить</button></nav>
+    </section>
+  </main>
+
+  <dialog id="walletModal">
+    <form class="modal-card" id="walletForm" method="dialog">
+      <button class="modal-close" id="closeWalletModal" type="button" aria-label="Закрыть">×</button>
+      <span class="eyebrow">NEW ACCOUNT</span><h2>Новый кошелёк</h2>
+      <label for="walletName">Название</label><input id="walletName" maxlength="127" placeholder="Например, Зарплата" required />
+      <label for="walletBalance">Начальный баланс</label><input id="walletBalance" type="number" min="0" step="0.01" value="0" required />
+      <label for="walletCurrency">Валюта</label><select id="walletCurrency"><option value="rub">RUB — рубль</option><option value="usd">USD — доллар</option><option value="eur">EUR — евро</option></select>
+      <button class="button button-primary" type="submit">Создать кошелёк</button>
+    </form>
+  </dialog>
+  <script src="/static/app.js?v=20260924-11"></script>
+</body>
+</html>
