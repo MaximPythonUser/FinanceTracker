@@ -1,9 +1,8 @@
-from datetime import datetime, timedelta
-import os
-
-from dotenv import load_dotenv
-from fastapi import HTTPException
+from datetime import datetime, timedelta, timezone
 import hashlib
+import logging
+
+from fastapi import HTTPException
 
 import jwt
 from app.models import User
@@ -13,12 +12,11 @@ import secrets
 from pwdlib import PasswordHash
 from app.schemas import UserResponse
 import app.service.email_service as email_service
+from app.config import SECRET_KEY
+
+logger = logging.getLogger(__name__)
 
 
-load_dotenv()
-
-
-SECRET_KEY = os.getenv("SECRET_KEY")
 password_hash = PasswordHash.recommended()
 
 
@@ -46,7 +44,7 @@ def request_email_code(db: Session, email: str):
 
     code = create_code()
     code_hash = hash_code(code)
-    expires_at = datetime.now() + timedelta(minutes=5)
+    expires_at = datetime.now(timezone.utc).replace(tzinfo=None) + timedelta(minutes=5)
 
     users_repository.create_email_code(db, user.id, code_hash, expires_at)
     db.commit()
@@ -54,7 +52,7 @@ def request_email_code(db: Session, email: str):
     try:
         email_service.send_email_code(user.email, code)
     except Exception as exc:
-        print(exc)
+        logger.exception("Ошибка при отправке кода подтверждения на email: %s", email)
         raise HTTPException(
             status_code=500,
             detail="Failed to send email with verification code",
@@ -76,7 +74,7 @@ def verify_email_code(db: Session, email: str, code: str, password: str):
         raise HTTPException(status_code=400, detail="Email code not found")
     if hash_code(code) != email_code.code_hash:
         raise HTTPException(status_code=400, detail="Code is not valid")
-    if datetime.now() > email_code.expires_at:
+    if datetime.now(timezone.utc).replace(tzinfo=None) > email_code.expires_at:
         raise HTTPException(status_code=400, detail="Code is expired")
     if user.password_hash:
         raise HTTPException(status_code=400, detail="User already registered")
@@ -97,10 +95,50 @@ def login_user(db: Session, email: str, password: str):
 def create_access_token(user_id: int):
     payload = {
         "sub": str(user_id),
-        "exp": datetime.now() + timedelta(days=7)
+        "exp": datetime.now(timezone.utc) + timedelta(days=7)
     }
     return jwt.encode(payload, SECRET_KEY, algorithm="HS256")
     
 
+def request_password_reset(db: Session, email: str):
+    user = users_repository.get_user_by_email(db, email)
+    if user is None or not user.password_hash:
+        return {"message":"Код отправлен на почту"}
+    code = create_code()
+    code_hash = hash_code(code)
+    expires_at = datetime.now(timezone.utc).replace(tzinfo=None) + timedelta(minutes=5)
+
+    users_repository.create_email_code(db, user.id, code_hash, expires_at)
+    db.commit()
+
+    try:
+        email_service.send_email_code(user.email, code)
+    except Exception as exc:
+        logger.exception("Ошибка при отправке кода сброса пароля на email: %s", email)
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to send email with verification code",
+        ) from exc
+    return {"message":"Код отправлен на почту"}
+
+
+
+def reset_password(db: Session, email: str, code: str, new_password: str):
+    user = users_repository.get_user_by_email(db, email)
+    if user is None:
+        raise HTTPException(status_code=404, detail="User with this email not found")
+    email_code = users_repository.get_email_code(db, user.id)
+    if email_code is None:
+        raise HTTPException(status_code=400, detail="Email code not found")
+    if hash_code(code) != email_code.code_hash:
+        raise HTTPException(status_code=400, detail="Code is not valid")
+    if datetime.now(timezone.utc).replace(tzinfo=None) > email_code.expires_at:
+        raise HTTPException(status_code=400, detail="Code is expired")
+    if not user.password_hash:
+        raise HTTPException(status_code=400, detail="User is not registered")
+    email_code.is_used = True
+    user.password_hash = password_hash.hash(new_password)
+    db.commit()
+    return {"message":"Пароль успешно изменен"}
 
     

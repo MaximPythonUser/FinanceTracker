@@ -13,8 +13,8 @@ from sqlalchemy.orm import Session
 def get_user(db: Session, login: str, email: str | None = None) -> User | None:
     query = db.query(User).filter(User.login == login)
     if email is not None:
-        query = db.query(User).filter(or_(User.login == login, User.email == email))
-    return query.scalar()
+        query = query.filter(or_(User.login == login, User.email == email))
+    return query.first()
 
 
 def create_user(db: Session, login: str, email: str) -> User:

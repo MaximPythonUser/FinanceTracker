@@ -1,4 +1,3 @@
-import os
 from typing import Generator
 from app.repository import users as users_repository
 from fastapi import Depends, HTTPException
@@ -7,11 +6,8 @@ from sqlalchemy.orm import Session, sessionmaker
 import jwt
 from app.database import SessionLocal
 from app.models import User
-from dotenv import load_dotenv
+from app.config import SECRET_KEY
 
-
-load_dotenv()
-SECRET_KEY = os.getenv("SECRET_KEY")
 security = HTTPBearer()
 
 def get_db() -> Generator[Session, None, None]:

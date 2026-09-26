@@ -33,9 +33,14 @@ input:focus,select:focus { border-color:#78a88b; box-shadow:0 0 0 3px rgba(120,1
 .auth-switch button { border:0; border-radius:6px; padding:9px 10px; color:var(--muted); background:transparent; font-weight:700; cursor:pointer; }
 .auth-switch button.active { background:var(--white); color:var(--ink); box-shadow:0 2px 7px rgba(34,58,43,.08); }
 .password-control { position:relative; }
-.password-control input { padding-right:48px; }
-.password-toggle { position:absolute; top:50%; right:8px; width:34px; height:34px; transform:translateY(-50%); border:0; border-radius:6px; background:transparent; color:var(--muted); font-size:18px; line-height:1; }
-.password-toggle:hover,.password-toggle:focus-visible { background:#edf4ed; color:var(--ink); outline:none; }
+.password-control input { padding-right:46px; }
+.password-toggle { position:absolute; top:50%; right:6px; width:36px; height:36px; transform:translateY(-50%); display:grid; place-items:center; padding:0; border:0; border-radius:7px; background:transparent; color:var(--muted); line-height:1; transition:color .18s ease, background-color .18s ease; }
+.password-toggle:hover,.password-toggle:focus-visible { background:rgba(120,168,139,.14); color:var(--ink); outline:none; }
+.password-toggle:focus-visible { box-shadow:0 0 0 3px rgba(120,168,139,.22); }
+.password-toggle .eye-icon { display:block; }
+.password-toggle .icon-hide { display:none; }
+.password-toggle.revealed .icon-show { display:none; }
+.password-toggle.revealed .icon-hide { display:block; }
 .error { min-height:18px; color:var(--red); font-size:13px; }
 .topbar { display:flex; justify-content:space-between; align-items:center; padding:28px 0 50px; border-bottom:1px solid var(--line); }
 .topbar-meta { display:flex; align-items:center; gap:10px; color:var(--muted); font-size:13px; }
@@ -288,3 +293,8 @@ body::before { opacity:.22; background-size:56px 56px; }
 .chart-hint { margin-left:auto; color:#98a69b; font-size:10px; }
 .legend-expense { background:#a7c8a9 !important; }
 @media (max-width:800px) { .flow-row { padding-bottom:13px; } .flow-line { grid-template-columns:52px minmax(50px,1fr) max-content; gap:7px; } .chart-hint { width:100%; margin-left:0; } }
+
+/* Восстановление пароля */
+.forgot-password { display:block; margin:14px auto 0; padding:0; border:0; background:transparent; color:#527565; font-size:12px; font-weight:600; cursor:pointer; transition:color .18s ease; }
+.forgot-password:hover { color:#17231f; text-decoration:underline; }
+.back-to-login { display:block; margin:14px auto 0; }

@@ -2,7 +2,7 @@ import jwt
 
 from app.dependency import SECRET_KEY
 from app.models import User 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from app.models import EmailCode
 from app.service.users import hash_code
 
@@ -32,7 +32,7 @@ def test_read_current_user_invalid_token(client):
 def test_read_current_user_with_expired_token(client) -> None:
     payload = {
         "sub": "1",
-        "exp": datetime.utcnow() - timedelta(minutes=30)
+        "exp": datetime.now(timezone.utc) - timedelta(minutes=30)
     }
     token = jwt.encode(payload, SECRET_KEY, algorithm="HS256")
     headers = {"Authorization": f"Bearer {token}"}
@@ -46,7 +46,7 @@ def test_verify_code_returns_access_token(db_session, client):
     db_session.commit()
     code = "123456"
     hash_code(code)
-    email_code = EmailCode(code_hash=hash_code(code), user_id=user.id, expires_at=datetime.now() + timedelta(days=7), is_used=False)
+    email_code = EmailCode(code_hash=hash_code(code), user_id=user.id, expires_at=datetime.now(timezone.utc).replace(tzinfo=None) + timedelta(days=7), is_used=False)
     db_session.add(email_code)
     db_session.commit()
     response = client.post("/api/v1/auth/verify-code", json={

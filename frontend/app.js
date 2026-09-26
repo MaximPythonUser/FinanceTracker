@@ -1,5 +1,5 @@
 const API = '/api/v1';
-const state = { token: localStorage.getItem('financeToken'), login: localStorage.getItem('financeLogin'), wallets: [], operations: [], showAllOperations: false, lastTotalBalance: 0, filter: 'all', sort: 'newest', authMode: 'login', codeRequested: false };
+const state = { token: localStorage.getItem('financeToken'), login: localStorage.getItem('financeLogin'), wallets: [], operations: [], showAllOperations: false, lastTotalBalance: 0, filter: 'all', sort: 'newest', authMode: 'login', codeRequested: false, resetRequested: false };
 const $ = (id) => document.getElementById(id);
 
 async function request(path, options = {}) {
@@ -28,6 +28,23 @@ async function authenticate(event) {
       await finishAuthentication(result);
       return;
     }
+    if (state.authMode === 'reset') {
+      if (!state.resetRequested) {
+        await request('/auth/request-password-reset', { method:'POST', body:JSON.stringify({ email }) });
+        state.resetRequested = true;
+        $('codeField').classList.remove('hidden'); $('passwordField').classList.remove('hidden');
+        $('password').required = true; $('emailCode').required = true; $('password').value = '';
+        $('authSubmit').firstChild.textContent = 'Сменить пароль ';
+        $('authNote').textContent = 'Введите код из письма и новый пароль.';
+        $('emailCode').focus();
+        return;
+      }
+      await request('/auth/password-reset', { method:'POST', body:JSON.stringify({ email, code:$('emailCode').value.trim(), new_password: password }) });
+      setAuthMode('login');
+      $('authNote').textContent = 'Пароль успешно изменён. Войдите с новым паролем.';
+      $('password').value = ''; $('emailCode').value = '';
+      return;
+    }
     if (!state.codeRequested) {
       try { await request('/users', { method:'POST', body:JSON.stringify({ login, email }) }); }
       catch (error) { if (!error.message.includes('already exists')) throw error; }
@@ -54,21 +71,31 @@ async function finishAuthentication(result) {
 }
 
 function setAuthMode(mode) {
-  state.authMode = mode; state.codeRequested = false; $('authError').textContent = '';
+  state.authMode = mode; state.codeRequested = false; state.resetRequested = false; $('authError').textContent = '';
+  const isReset = mode === 'reset';
   $('loginMode').classList.toggle('active', mode === 'login'); $('registerMode').classList.toggle('active', mode === 'register');
-  $('authTitle').textContent = mode === 'login' ? 'Вход по паролю' : 'Регистрация по email';
-  $('loginField').classList.toggle('hidden', mode === 'login'); $('codeField').classList.add('hidden'); $('passwordField').classList.toggle('hidden', mode === 'register');
+  $('authTitle').textContent = isReset ? 'Восстановление пароля' : mode === 'login' ? 'Вход по паролю' : 'Регистрация по email';
+  $('loginField').classList.toggle('hidden', mode !== 'register'); $('codeField').classList.add('hidden'); $('passwordField').classList.toggle('hidden', mode === 'register' || isReset);
   $('login').required = mode === 'register'; $('email').required = true; $('password').required = mode === 'login'; $('emailCode').required = false;
-  $('authSubmit').firstChild.textContent = mode === 'login' ? 'Войти ' : 'Получить код ';
-  $('authNote').textContent = mode === 'login' ? 'Используйте email и пароль, заданный при регистрации.' : 'Для регистрации потребуется одно подтверждение по email.';
+  $('email').disabled = false;
+  $('password').value = ''; $('emailCode').value = '';
+  $('authSubmit').firstChild.textContent = isReset ? 'Отправить код ' : mode === 'login' ? 'Войти ' : 'Получить код ';
+  $('authNote').textContent = isReset ? 'Укажите email, на который зарегистрирован аккаунт.' : mode === 'login' ? 'Используйте email и пароль, заданный при регистрации.' : 'Для регистрации потребуется одно подтверждение по email.';
+  $('forgotPasswordLink').classList.toggle('hidden', isReset);
+  $('backToLogin').classList.toggle('hidden', !isReset);
 }
 
 function togglePassword() {
   const passwordInput = $('password');
+  const toggleButton = $('togglePassword');
   const isVisible = passwordInput.type === 'text';
   passwordInput.type = isVisible ? 'password' : 'text';
-  $('togglePassword').setAttribute('aria-label', isVisible ? 'Показать пароль' : 'Скрыть пароль');
-  $('togglePassword').title = isVisible ? 'Показать пароль' : 'Скрыть пароль';
+  const revealed = !isVisible;
+  toggleButton.classList.toggle('revealed', revealed);
+  toggleButton.setAttribute('aria-pressed', String(revealed));
+  const label = isVisible ? 'Показать пароль' : 'Скрыть пароль';
+  toggleButton.setAttribute('aria-label', label);
+  toggleButton.title = label;
 }
 
 async function loadDashboard() {
@@ -91,7 +118,7 @@ async function submitOperation(event) { event.preventDefault(); try { await requ
 async function submitTransfer(event) { event.preventDefault(); try { await request('/operations/transfer', { method:'POST', body:JSON.stringify({ from_wallet_id:Number($('fromWallet').value), to_wallet_id:Number($('toWallet').value), amount:Number($('transferAmount').value) }) }); event.target.reset(); showToast('Перевод выполнен'); loadDashboard(); } catch (error) { showToast(error.message, true); } }
 async function createWallet(event) { event.preventDefault(); try { await request('/wallets', { method:'POST', body:JSON.stringify({ name:$('walletName').value.trim(), initial_balance:Number($('walletBalance').value), currency:$('walletCurrency').value }) }); $('walletModal').close(); event.target.reset(); showToast('Кошелёк создан'); loadDashboard(); } catch (error) { showToast(error.message, true); } }
 
- $('authForm').addEventListener('submit', authenticate); $('loginMode').addEventListener('click', () => setAuthMode('login')); $('registerMode').addEventListener('click', () => setAuthMode('register')); $('togglePassword').addEventListener('click', togglePassword); $('operationForm').addEventListener('submit', submitOperation); $('transferForm').addEventListener('submit', submitTransfer); $('walletForm').addEventListener('submit', createWallet); $('refreshButton').addEventListener('click', loadDashboard); $('openWalletModal').addEventListener('click', () => $('walletModal').showModal()); $('closeWalletModal').addEventListener('click', () => $('walletModal').close()); $('logoutButton').addEventListener('click', () => { clearSession(); location.reload(); });
+ $('authForm').addEventListener('submit', authenticate); $('loginMode').addEventListener('click', () => setAuthMode('login')); $('registerMode').addEventListener('click', () => setAuthMode('register')); $('forgotPasswordLink').addEventListener('click', () => setAuthMode('reset')); $('backToLogin').addEventListener('click', () => setAuthMode('login')); $('togglePassword').addEventListener('click', togglePassword); $('operationForm').addEventListener('submit', submitOperation); $('transferForm').addEventListener('submit', submitTransfer); $('walletForm').addEventListener('submit', createWallet); $('refreshButton').addEventListener('click', loadDashboard); $('openWalletModal').addEventListener('click', () => $('walletModal').showModal()); $('closeWalletModal').addEventListener('click', () => $('walletModal').close()); $('logoutButton').addEventListener('click', () => { clearSession(); location.reload(); });
  $('activityToggle').addEventListener('click', () => { state.showAllOperations = !state.showAllOperations; render(state.lastTotalBalance); }); $('activityFilter').addEventListener('change', event => { state.filter = event.target.value; state.showAllOperations = false; render(state.lastTotalBalance); }); $('activitySort').addEventListener('change', event => { state.sort = event.target.value; render(state.lastTotalBalance); }); $('mobileRefresh').addEventListener('click', loadDashboard);
 async function restoreSession() {
   if (!state.token) return showAuth();

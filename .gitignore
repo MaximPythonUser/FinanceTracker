@@ -43,3 +43,4 @@ dist/
 # Local secrets and certificates
 *.pem
 *.key
+*.secret_key

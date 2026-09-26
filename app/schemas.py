@@ -132,5 +132,7 @@ class TotalBalance(BaseModel):
     total_balance: Decimal
 
 
-
-
+class PasswordResetRequest(BaseModel):
+    email: EmailStr = Field(..., max_length=127)
+    code: str = Field(..., min_length=6, max_length=6)
+    new_password: str = Field(..., min_length=8, max_length=128)
