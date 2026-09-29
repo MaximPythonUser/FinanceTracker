@@ -298,3 +298,75 @@ body::before { opacity:.22; background-size:56px 56px; }
 .forgot-password { display:block; margin:14px auto 0; padding:0; border:0; background:transparent; color:#527565; font-size:12px; font-weight:600; cursor:pointer; transition:color .18s ease; }
 .forgot-password:hover { color:#17231f; text-decoration:underline; }
 .back-to-login { display:block; margin:14px auto 0; }
+
+/* ===== Карточка-ссылка на страницу операций ===== */
+.operation-card {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  align-items: center;
+  gap: 16px;
+  padding: 20px 24px;
+  margin-top: 12px;
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+  transition: background-color .18s ease, box-shadow .18s ease, border-color .18s ease, transform .18s ease;
+  cursor: pointer;
+}
+.operation-card:hover {
+  background: #f5f8f4;
+  box-shadow: 0 4px 20px rgba(34,60,46,.1);
+  border-color: #9db9a5;
+  transform: translateY(-1px);
+}
+.expenses-link-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: var(--mint);
+  flex-shrink: 0;
+}
+.expenses-link-icon svg {
+  color: #527565;
+}
+.expenses-link-text {
+  flex: 1;
+  min-width: 0;
+}
+.expenses-link-title,
+.expenses-link-sub {
+  text-decoration: none;
+  color: inherit;
+}
+.expenses-link-arrow {
+  font-size: 20px;
+  color: var(--muted);
+  transition: transform .18s ease, color .18s ease;
+}
+.operation-card:hover .expenses-link-arrow {
+  color: var(--ink);
+  transform: translateX(3px);
+}
+
+@media (max-width: 800px) {
+  .operation-card {
+    padding: 16px 18px;
+    gap: 12px;
+  }
+  .expenses-link-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+  }
+  .expenses-link-title {
+    font-size: 15px;
+  }
+  .expenses-link-sub {
+    font-size: 12px;
+  }
+}
