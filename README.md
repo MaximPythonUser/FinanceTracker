@@ -1,6 +1,6 @@
 # Finance Tracker
 
-Небольшой трекер личных финансов на FastAPI, SQLAlchemy, SQLite и vanilla JavaScript.
+Небольшой трекер личных финансов на FastAPI, SQLAlchemy и vanilla JavaScript. Приложение поддерживает SQLite для локального запуска и PostgreSQL для запуска через Docker.
 
 Приложение позволяет:
 
@@ -17,7 +17,8 @@
 - Python 3.10+
 - FastAPI
 - SQLAlchemy 2
-- SQLite
+- SQLite или PostgreSQL
+- Alembic для миграций схемы базы данных
 - Pydantic 2
 - JWT с алгоритмом HS256
 - Argon2 для хеширования паролей
@@ -44,17 +45,36 @@ py -m venv .venv
 python -m pip install -r requirements.txt
 ```
 
-4. Создайте файл `.env` на основе `.env.example` и укажите значения:
+4. Создайте файл `.env` на основе `.env.example` и укажите значения. Для работы с PostgreSQL задайте `POSTGRES_PASSWORD` и такой же пароль в `DATABASE_URL`. Не используйте реальные секреты из примера:
 
 ```env
 SMTP_USER=your-gmail-address@gmail.com
 SMTP_PASSWORD=your-gmail-app-password
 SECRET_KEY=long-random-secret
+POSTGRES_DB=finance_tracker
+POSTGRES_PASSWORD=local-development-password
+DATABASE_URL=postgresql+psycopg://finance_user:local-development-password@localhost:5433/finance_tracker
 ```
 
 Для Gmail используйте App Password, а не обычный пароль от аккаунта.
 
-5. Запустите сервер:
+5. Запустите PostgreSQL через Docker Compose:
+
+```powershell
+docker compose up -d
+```
+
+Контейнер публикует PostgreSQL на порту `5433` хоста (внутри контейнера используется `5432`). Данные базы хранятся в локальной папке `postgres_data/`, которая исключена из Git.
+
+6. Примените миграции, чтобы создать таблицы:
+
+```powershell
+python -m alembic upgrade head
+```
+
+Миграции создают схему, но не переносят данные из SQLite.
+
+7. Запустите сервер:
 
 ```powershell
 python -m uvicorn main:app --reload
@@ -66,6 +86,22 @@ python -m uvicorn main:app --reload
 - Swagger UI: http://127.0.0.1:8000/docs
 
 В Windows также можно запустить `start_server.bat`.
+
+Если `DATABASE_URL` не задан, приложение использует `finance_tracker.db` в SQLite. При запуске на SQLite также сначала примените миграции командой `python -m alembic upgrade head`.
+
+### Перенос существующей SQLite-базы
+
+Чтобы перенести пользователей, кошельки и операции из `finance_tracker.db` в пустую PostgreSQL-базу:
+
+1. Сделайте резервную копию SQLite-файла.
+2. Запустите PostgreSQL и примените миграции.
+3. Выполните из корня проекта:
+
+   ```powershell
+   python .\migrate.py
+   ```
+
+Скрипт сохраняет ID записей и переносит данные одной транзакцией. Он остановится, если целевые таблицы уже содержат записи. Временные email-коды не переносятся. Скрипт не удаляет и не изменяет SQLite-файл.
 
 ## Авторизация
 
@@ -152,6 +188,7 @@ node --check frontend\app.js
 - SMTP App Password;
 - `SECRET_KEY`;
 - файлы SQLite-баз;
+- локальные файлы PostgreSQL в `postgres_data/`;
 - виртуальное окружение.
 
-Для этого используется `.gitignore`. Публичным репозиторием делитесь только с заполненным `.env.example`, где нет настоящих секретов.
+Для этого используется `.gitignore`. В `.env.example` должны быть только описания и фиктивные значения, никогда не реальные секреты.

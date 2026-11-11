@@ -1,22 +1,20 @@
-from sqlalchemy import create_engine, inspect, text
+import os
+from dotenv import load_dotenv
+from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
 
+load_dotenv()
 
-DATABASE_URL = "sqlite:///./finance_tracker.db"
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./finance_tracker.db")
 
-engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
+connect_args = (
+	{"check_same_thread": False}
+	if DATABASE_URL.startswith("sqlite")
+	else {}
+)
+
+engine = create_engine(DATABASE_URL, connect_args=connect_args)
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 Base = declarative_base()
-
-
-def ensure_schema() -> None:
-	inspector = inspect(engine)
-	if "user" not in inspector.get_table_names():
-		return
-	columns = {column["name"] for column in inspector.get_columns("user")}
-	if "password_hash" not in columns:
-		with engine.begin() as connection:
-			connection.execute(text('ALTER TABLE "user" ADD COLUMN password_hash VARCHAR'))
-

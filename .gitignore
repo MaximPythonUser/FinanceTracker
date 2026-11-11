@@ -44,3 +44,5 @@ dist/
 *.pem
 *.key
 *.secret_key
+*.db.bak
+postgres_data/
